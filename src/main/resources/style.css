@@ -1,0 +1,69 @@
+.button-normal {
+    -fx-background-color: grey;
+}
+
+.button-operation {
+    -fx-background-color: orange;
+}
+
+.font-white {
+    -fx-text-fill: white;
+}
+
+.button-calc {
+    -fx-background-color: #fdc04c;
+}
+
+.button-form {
+    -fx-max-height: 50px;
+    -fx-max-width: 50px;
+    -fx-min-width: 50px;
+    -fx-min-height: 50px;
+
+    -fx-background-radius: 50px;
+    -fx-border-radius: 50px;
+
+    -fx-alignment: center;
+}
+
+.lable-expression {
+    -fx-min-height: 48px;
+    -fx-max-height: 48px;
+    -fx-min-width: 213px;
+    -fx-max-width: 10000px;
+    -fx-text-fill: white;
+    -fx-font-size: 25px;
+}
+
+.background-black {
+    -fx-background-color: #000000;
+}
+
+.button-quit {
+    -fx-background-color: #ff0000;
+    -fx-text-fill: black;
+}
+
+.background-white {
+    -fx-background-color: #FFFFFF;
+}
+
+.color-black {
+    -fx-text-fill: black;
+}
+
+.font-red {
+    -fx-text-fill: red;
+}
+
+.scroll-pane {
+    -fx-pref-height: 50px;
+}
+
+.background-red {
+    -fx-background-color: #730606;
+}
+
+.background-green {
+    -fx-background-color: #056b05;
+}

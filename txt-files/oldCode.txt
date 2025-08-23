@@ -1,0 +1,46 @@
+int row = 0; //zeile
+        int column = 0; //spalte
+
+        for (int i = 0; i < characters.length; i++) {
+            Button tmp = new Button(characters[i]);
+            if (characters[i].equals("+") || characters[i].equals("-") || characters[i].equals("×") || characters[i].equals("÷")) {
+                tmp.getStyleClass().addAll("font-white", "button-operation", "button-form");
+                gridPane.add(tmp, column, row);
+
+                //add sign to expression and update lExcpression
+
+                row++;
+                column = 0;
+            }else if(characters[i].equals("=")){
+                tmp.getStyleClass().addAll("font-white", "button-calc", "button-form");
+                //call method for calculation and update lExcpression
+
+                gridPane.add(tmp, column, row);
+                column++;
+            }else{
+                tmp.getStyleClass().addAll("font-white", "button-normal", "button-form");
+                gridPane.add(tmp, column, row);
+                //add number to expression and update lExcpression
+                final String text = characters[i];
+                tmp.setOnAction(event -> {
+                    if(expression.equals("0")){
+                        System.out.println(expression);
+                        expression = text;
+                        lExcpression.setText(expression);
+                    }else{
+                        expression = expression + text;
+                        System.out.println(expression);
+                        lExcpression.setText(expression);
+                    }
+                    updateLabel();
+                });
+
+                column++;
+            }
+        }
+
+------------------------------------------------------------------------------------------------------------------------
+
+ (character.equals("+") || character.equals("-") || character.equals("×") || character.equals("÷"))
+
+------------------------------------------------------------------------------------------------------------------------
