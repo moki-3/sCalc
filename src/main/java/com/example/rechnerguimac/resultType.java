@@ -11,6 +11,9 @@ public class resultType {
     public boolean isError() {
         return isError;
     }
+    public void setResult(String result) {
+        this.result = result;
+    }
 
     public resultType(double dResult, boolean isError) {
         this.result = dResult + "";

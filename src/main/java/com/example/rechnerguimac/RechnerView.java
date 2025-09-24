@@ -1,477 +1,515 @@
 package com.example.rechnerguimac;
 
-//Frontend
-
-import eu.hansolo.tilesfx.skins.RadialDistributionTileSkin;
 import javafx.application.Application;
-import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
+import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Set;
+
 
 public class RechnerView extends Application {
     String expression = "";
     Label lExcpression = new Label("");
-    boolean prevResult = false;
+    private Stage stage;
+    private Scene scene;
+    private boolean darkmode = true;
+    private ScrollPane scrolPane;
+    private GridPane gp;
+    public ArrayList<String> history = new ArrayList<>();
+    Stage historyStage;
+    Scene historyScene;
+
+    public void addToHistrory(String expr){
+        history.add(expr);
+    }
 
     @Override
-    public void start(Stage stage) throws Exception {
-        final boolean[] darkmode = {true};
-        VBox layout = new VBox();
-        ScrollPane scrollPane = new ScrollPane(lExcpression);
-        scrollPane.getStyleClass().add("background-black");
+    public void start(Stage primaryStage) throws Exception {
+        this.stage = primaryStage;
+
+
+        scrolPane = new ScrollPane(lExcpression);
+        scrolPane.getStyleClass().add("background-black");
+        scrolPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrolPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrolPane.setFitToHeight(true);
+        scrolPane.setPannable(true);
+
         lExcpression.getStyleClass().addAll("background-black", "lable-expression");
-
-        GridPane gridPane = new GridPane();
-        //gridPane.getStyleClass().add("background-black");
-        gridPane.setHgap(5);
-        gridPane.setVgap(5);
+        VBox root = new VBox(scrolPane, createButtons());
 
 
-        ArrayList<Button> buttons = createButtons();
-
-
-        String os = System.getProperty("os.name").toLowerCase();
-        String text = "\uF8FF";
-        String moon = "\uD83C\uDF19";
-        String sun = "☀\uFE0F";
-        if (!os.contains("mac")) {
-            text = sun;
-        }
-        Button changeTheme = new Button(text);
-        changeTheme.getStyleClass().addAll("font-white", "button-operation", "button-form");
-        changeTheme.setOnAction(e -> {
-            if (darkmode[0]) {
-                // Remove dark classes
-                lExcpression.getStyleClass().removeAll("background-black", "color-white");
-                gridPane.getStyleClass().removeAll("background-black");
-                layout.getStyleClass().removeAll("background-black");
-                scrollPane.getStyleClass().removeAll("background-black");
-
-                // Add light classes
-                lExcpression.getStyleClass().addAll("background-white", "color-black");
-                gridPane.getStyleClass().add("background-white");
-                layout.getStyleClass().add("background-white");
-                scrollPane.getStyleClass().add("background-white");
-
-                darkmode[0] = false;
-                if (!os.contains("mac")) {
-                    changeTheme.setText(moon);
-                }
-            } else {
-                // Remove light classes
-                lExcpression.getStyleClass().removeAll("background-white", "color-black");
-                gridPane.getStyleClass().removeAll("background-white");
-                layout.getStyleClass().removeAll("background-white");
-                scrollPane.getStyleClass().removeAll("background-white");
-
-                // Add dark classes
-                lExcpression.getStyleClass().addAll("background-black", "color-white");
-                gridPane.getStyleClass().add("background-black");
-                layout.getStyleClass().add("background-black");
-                scrollPane.getStyleClass().add("background-black");
-
-                darkmode[0] = true;
-                if (!os.contains("mac")) {
-                    changeTheme.setText(sun);
-                }
-            }
-
-        });
-
-
-        Button stayOnTop = new Button("top");
-        stayOnTop.getStyleClass().addAll("button-operation", "button-form", "font-white", "background-red");
-        stage.setAlwaysOnTop(false);
-        stayOnTop.setOnAction(e -> {
-            if (stage.isAlwaysOnTop()) {
-                stage.setAlwaysOnTop(false);
-                stayOnTop.getStyleClass().remove("background-green");
-                stayOnTop.getStyleClass().add("background-red");
-            } else {
-                stage.setAlwaysOnTop(true);
-                stayOnTop.getStyleClass().remove("background-red");
-                stayOnTop.getStyleClass().add("background-green");
-
-            }
-        });
-        buttons.add(stayOnTop);
-        buttons.add(changeTheme);
-
-        int row = 0;
-        int col = 0;
-
-        for (Button button : buttons) {
-            if (button.getText().equals("+") || button.getText().equals("-") || button.getText().equals("×")
-                    || button.getText().equals("÷")) {
-                gridPane.add(button, col, row);
-                row++;
-                col = 0;
-            } else {
-                gridPane.add(button, col, row);
-                col++;
-            }
-        }
-
-
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setPannable(true);
-        //scrollPane.setFitToWidth(true);
-        layout.getChildren().addAll(scrollPane, gridPane);
-        layout.setAlignment(Pos.TOP_CENTER);
-        layout.getStyleClass().add("background-black");
-        Scene scene = new Scene(layout);
-
-
-        // adding real keys
-
-        scene.setOnKeyPressed(event -> {
-            String number = event.getText();
-            if (number.matches("[0-9]")) {
-                appendToExpression(number);
-            }
-            if (event.getCode() == KeyCode.ENTER) {
-                RechnerControler rc = new RechnerControler();
-                String tmpExpr = expression;
-                expression = rc.getCalculation(tmpExpr);
-                updateLabel();
-
-                prevResult = true;
-                Clipboard clipboard = Clipboard.getSystemClipboard();
-                ClipboardContent content = new ClipboardContent();
-                content.putString(lExcpression.getText());
-                clipboard.setContent(content);
-
-
-            }
-            if (event.getCode() == KeyCode.BACK_SPACE) {
-                if (lExcpression.getText().equals("Error") || prevResult) {
-                    expression = "";
-                    updateLabel();
-                    prevResult = false;
-                } else {
-                    char[] arr = lExcpression.getText().toCharArray();
-                    expression = "";
-                    for (int i = 0; i < arr.length - 1; i++) {
-                        expression += arr[i];
-                    }
-                    updateLabel();
-                }
-            }
-            if (event.getCode() == KeyCode.DELETE) {
-                expression = "";
-                updateLabel();
-            }
-            if (number.matches("[+-//*,.]")) {
-                if (number.equals("/")) {
-                    appendToExpression("÷");
-                } else if (number.equals("*")) {
-                    appendToExpression("×");
-                } else if (number.equals(".")) {
-                    appendToExpression(",");
-                } else {
-                    appendToExpression(number);
-                }
-            }
-
-            if (event.isShiftDown() && event.isAltDown() && event.getCode() == KeyCode.UP) {
-                if (stage.isAlwaysOnTop()) {
-                    stage.setAlwaysOnTop(false);
-                    stayOnTop.getStyleClass().remove("background-green");
-                    stayOnTop.getStyleClass().add("background-red");
-                } else {
-                    stage.setAlwaysOnTop(true);
-                    stayOnTop.getStyleClass().remove("background-red");
-                    stayOnTop.getStyleClass().add("background-green");
-
-                }
-            }
-
-            if (event.getCode() == KeyCode.T) {
-                if (darkmode[0]) {
-                    // Remove dark classes
-                    lExcpression.getStyleClass().removeAll("background-black", "color-white");
-                    gridPane.getStyleClass().removeAll("background-black");
-                    layout.getStyleClass().removeAll("background-black");
-                    scrollPane.getStyleClass().removeAll("background-black");
-
-                    // Add light classes
-                    lExcpression.getStyleClass().addAll("background-white", "color-black");
-                    gridPane.getStyleClass().add("background-white");
-                    layout.getStyleClass().add("background-white");
-                    scrollPane.getStyleClass().add("background-white");
-
-                    darkmode[0] = false;
-                    if (!os.contains("mac")) {
-                        changeTheme.setText(moon);
-                    }
-                } else {
-                    // Remove light classes
-                    lExcpression.getStyleClass().removeAll("background-white", "color-black");
-                    gridPane.getStyleClass().removeAll("background-white");
-                    layout.getStyleClass().removeAll("background-white");
-                    scrollPane.getStyleClass().removeAll("background-white");
-
-                    // Add dark classes
-                    lExcpression.getStyleClass().addAll("background-black", "color-white");
-                    gridPane.getStyleClass().add("background-black");
-                    layout.getStyleClass().add("background-black");
-                    scrollPane.getStyleClass().add("background-black");
-
-                    darkmode[0] = true;
-                    if (!os.contains("mac")) {
-                        changeTheme.setText(sun);
-                    }
-                }
-            }
-
-
-        });
-
-
+        this.scene = new Scene(root);
+        addKeyboardShortCuts();
+        Image icon = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icon-1.png")));
+        stage.getIcons().add(icon);
         String css = Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm();
         scene.getStylesheets().add(css);
         stage.setScene(scene);
         stage.show();
         stage.setTitle("Calculator");
         stage.setResizable(false);
-        stage.setMinHeight(351);
+        stage.setMinHeight(301);
         stage.setMinWidth(215);
-//        stage.initStyle(StageStyle.UNIFIED);
-        updateLabel();
 
+    }
+
+    private boolean isValid(String newValue){
+        char[] arrayExpression = expression.toCharArray(); //expression als char Array
+        String lastExpression = "";
+        if(!expression.isBlank()){
+            lastExpression = String.valueOf(arrayExpression[arrayExpression.length - 1]); //letztes zeichen der expression als String
+        }
+
+        //wenn buchstaben außer E in der Expression sind
+        if(newValue.matches(".*[A-DF-Za-z].*")){
+            return false;
+        }
+
+        //wenn newValue mit division, multiplikation, komma oder geschlossener klammer beginnt
+        if(newValue.matches("[×÷/).,]") && expression.isBlank()){
+            return false;
+        }
+
+        //wenn . oder , in der expression ist
+        if(newValue.matches("[.,]")){
+            //überprüfen ob das letzte elemnt in der expression eine zahl ist, wenn nicht fasle returnen
+            if (!lastExpression.matches("[0-9]")) {
+                return false;
+            }
+            //expression von hinten durchgehen und prüfen ob es noch ein komma gibt
+            for(int i = arrayExpression.length-1; i >= 0; i--){
+                String tmp =  String.valueOf(arrayExpression[i]);
+                //false returnen wenn ein ., in der Zahl ist
+                if(tmp.matches("[.,]")){
+                    return false;
+                }
+                //true returnen wenn die zahl endet
+                if(tmp.matches("[×÷+\\-/()]")){
+                    return true;
+                }
+            }
+            return true;
+        }
+
+        //wenn newValue ein rechenoperator ist und wenn letztes element auch ein rechenoperator ist
+        if(newValue.matches("[×÷+\\-/]") && lastExpression.matches("[×÷+\\-/]")){
+                return false;
+        }
+
+        if((newValue.equals("(") && lastExpression.equals("(")) ||
+                (newValue.equals(")") && lastExpression.equals(")"))){
+            return false;
+        }
+
+
+        //nach ( darf kein .,/* sein
+        if(!lastExpression.isBlank() && lastExpression.equals("(") && newValue.matches("[×÷/.,]")){
+            return false;
+        }
+        //nach ) darf kein ., sein
+        if(!lastExpression.isBlank() && lastExpression.equals(")") && newValue.matches("[.,]")){
+            return false;
+        }
+        return true;
     }
 
     private void updateLabel() {
-        if (expression.equals("Error")) {
+        if (expression.contains("Error") || expression.contains("Infinity")) {
             lExcpression.getStyleClass().add("font-red");
-
         } else {
             lExcpression.getStyleClass().remove("font-red");
-
         }
-
-
         lExcpression.setText(expression);
 
-
-    }
-
-    public static void main(String[] args) {
-        launch();
-    }
-
-
-    private ArrayList<Button> createButtons() {
-        ArrayList<Button> buttons = new ArrayList<>();
-
-        Button button00 = new Button("7");
-        button00.getStyleClass().addAll("font-white", "button-normal", "button-form");
-        button00.setOnAction(event -> {
-            appendToExpression(button00.getText());
-        });
-        buttons.add(button00);
-
-
-        Button button01 = new Button("8");
-        button01.getStyleClass().addAll("font-white", "button-normal", "button-form");
-        button01.setOnAction(event -> {
-            appendToExpression(button01.getText());
-        });
-        buttons.add(button01);
-
-
-        Button button02 = new Button("9");
-        button02.getStyleClass().addAll("font-white", "button-normal", "button-form");
-        button02.setOnAction(event -> {
-            appendToExpression(button02.getText());
-        });
-        buttons.add(button02);
-
-        Button button03 = new Button("÷");
-        button03.getStyleClass().addAll("font-white", "button-operation", "button-form");
-        button03.setOnAction(event -> {
-            appendToExpression(button03.getText());
-        });
-        buttons.add(button03);
-
-        Button button04 = new Button("4");
-        button04.getStyleClass().addAll("font-white", "button-normal", "button-form");
-        button04.setOnAction(event -> {
-            appendToExpression(button04.getText());
-        });
-        buttons.add(button04);
-
-        Button button05 = new Button("5");
-        button05.getStyleClass().addAll("font-white", "button-normal", "button-form");
-        button05.setOnAction(event -> {
-            appendToExpression(button05.getText());
-        });
-        buttons.add(button05);
-
-        Button button06 = new Button("6");
-        button06.getStyleClass().addAll("font-white", "button-normal", "button-form");
-        button06.setOnAction(event -> {
-            appendToExpression(button06.getText());
-        });
-        buttons.add(button06);
-
-        Button button07 = new Button("×");
-        button07.getStyleClass().addAll("font-white", "button-operation", "button-form");
-        button07.setOnAction(event -> {
-            appendToExpression(button07.getText());
-        });
-        buttons.add(button07);
-
-        Button button08 = new Button("1");
-        button08.getStyleClass().addAll("font-white", "button-normal", "button-form");
-        button08.setOnAction(event -> {
-            appendToExpression(button08.getText());
-        });
-        buttons.add(button08);
-
-        Button button09 = new Button("2");
-        button09.getStyleClass().addAll("font-white", "button-normal", "button-form");
-        button09.setOnAction(event -> {
-            appendToExpression(button09.getText());
-        });
-        buttons.add(button09);
-
-        Button button10 = new Button("3");
-        button10.getStyleClass().addAll("font-white", "button-normal", "button-form");
-        button10.setOnAction(event -> {
-            appendToExpression(button10.getText());
-        });
-        buttons.add(button10);
-
-        Button button11 = new Button("-");
-        button11.getStyleClass().addAll("font-white", "button-operation", "button-form");
-        button11.setOnAction(event -> {
-            appendToExpression(button11.getText());
-        });
-        buttons.add(button11);
-
-        Button button12 = new Button("=");
-        button12.getStyleClass().addAll("font-white", "button-calc", "button-form");
-        button12.setOnAction(event -> {
-            RechnerControler rc = new RechnerControler();
-            String tmpExpr = expression;
-            expression = rc.getCalculation(tmpExpr);
-            updateLabel();
-            Clipboard clipboard = Clipboard.getSystemClipboard();
-            ClipboardContent content = new ClipboardContent();
-            content.putString(lExcpression.getText());
-            clipboard.setContent(content);
-            prevResult = true;
-        });
-        buttons.add(button12);
-
-        Button button13 = new Button("0");
-        button13.getStyleClass().addAll("font-white", "button-normal", "button-form");
-        button13.setOnAction(event -> {
-            appendToExpression(button13.getText());
-        });
-        buttons.add(button13);
-
-        Button button14 = new Button(",");
-        button14.getStyleClass().addAll("font-white", "button-normal", "button-form");
-        button14.setOnAction(event -> {
-            appendToExpression(button14.getText());
-        });
-        buttons.add(button14);
-
-        Button button15 = new Button("+");
-        button15.getStyleClass().addAll("font-white", "button-operation", "button-form");
-        button15.setOnAction(event -> {
-            appendToExpression(button15.getText());
-        });
-        buttons.add(button15);
-
-        Button button16 = new Button("del");
-        button16.getStyleClass().addAll("font-white", "button-operation", "button-form");
-        button16.setOnAction(event -> {
-            if (lExcpression.getText().equals("Error") || prevResult) {
-                expression = "";
-                updateLabel();
-                prevResult = false;
-            } else {
-
-                char[] arr = lExcpression.getText().toCharArray();
-                expression = "";
-                for (int i = 0; i < arr.length - 1; i++) {
-                    expression += arr[i];
-                }
-                updateLabel();
-            }
-        });
-        buttons.add(button16);
-
-        Button button17 = new Button("AC");
-        button17.getStyleClass().addAll("font-white", "button-operation", "button-form");
-        button17.setOnAction(event -> {
-            expression = "";
-            updateLabel();
-        });
-        buttons.add(button17);
-
-//        Button button18 = new Button("quit");
-//        button18.getStyleClass().addAll("button-quit", "button-form");
-//        button18.setOnAction(event -> {
-//            System.exit(0);
-//        });
-//        buttons.add(button18);
-
-        return buttons;
+        //System.out.println(lExcpression.getText());
     }
 
     private void appendToExpression(String value) {
-        if (prevResult) {
+        if(expression.contains("Error") || expression.contains("Infinity")) {
             expression = "";
-            prevResult = false;
+            lExcpression.getStyleClass().remove("font-red");
         }
-
-        if (value.matches("[×÷+\\-,]")) {
-            if (expression.isBlank()) {
-                return;
-            }
-            String lastChar = String.valueOf(expression.charAt(expression.length() - 1));
-            if (lastChar.matches("[×÷+\\-,]")) {
-                return; // does not add a rechenoperator if t1he last character is one
-            }
+        if(isValid(value)){
+            expression = expression + value;
+            updateLabel();
         }
-
-        if (value.equals(",")) {
-            char[] arr = expression.toCharArray();
-            for (int i = arr.length - 1; i > -1; i--) {
-                if (String.valueOf(arr[i]).matches("[×÷+\\-]")) {
-                    break;
-                }
-                if (arr[i] == ',') {
-                    return;
-                }
-
-            }
-        }
-
-        expression = expression + value;
-        updateLabel();
-//        System.out.println("Experssion: " + expression);
-//        System.out.println("Label: " + lExcpression.getText());
-//        System.out.println();
     }
 
+
+    private GridPane createButtons() {
+        String[] buttonsText = {"7", "4", "1", "=", "del", "8", "5", "2", "0", "()", "9", "6", "3", ".", "top", "÷", "×", "-", "+", "t", "AC", "paste", "History"};
+        gp = new GridPane();
+        gp.setHgap(5);
+        gp.setVgap(5);
+        Set<String> specials = Set.of("t", "()", "AC", "del", "top", "paste", "History");
+        int row = 0;
+        int col = 0;
+        int maxRows = 5; //wie viele zeilen es geben soll
+        //buttons eventlistener und css classen hinzufügen
+        for (int i = 0; i < buttonsText.length; i++) {
+            Button button = new Button(buttonsText[i]);
+            //wenn special character
+            if (specials.contains(buttonsText[i])) {
+                button.getStyleClass().addAll("font-white", "button-operation", "button-form");// css class for special buttons
+                //top button
+                if (buttonsText[i].equals("t")) {
+                    button.setOnAction(event -> {
+                        if (darkmode) {
+                            // Remove dark classes
+                            lExcpression.getStyleClass().removeAll("background-black", "color-white");
+                            gp.getStyleClass().removeAll("background-black");
+                            //layout.getStyleClass().removeAll("background-black");
+                            scrolPane.getStyleClass().removeAll("background-black");
+
+                            // Add light classes
+                            lExcpression.getStyleClass().addAll("background-white", "color-black");
+                            gp.getStyleClass().add("background-white");
+                            //layout.getStyleClass().add("background-white");
+                            scrolPane.getStyleClass().add("background-white");
+
+                            darkmode = false;
+
+                        } else {
+                            // Remove light classes
+                            lExcpression.getStyleClass().removeAll("background-white", "color-black");
+                            gp.getStyleClass().removeAll("background-white");
+                            //layout.getStyleClass().removeAll("background-white");
+                            scrolPane.getStyleClass().removeAll("background-white");
+
+                            // Add dark classes
+                            lExcpression.getStyleClass().addAll("background-black", "color-white");
+                            gp.getStyleClass().add("background-black");
+                            //layout.getStyleClass().add("background-black");
+                            scrolPane.getStyleClass().add("background-black");
+
+                            darkmode = true;
+
+                        }
+                    });
+                }
+
+                //paste button
+                if (buttonsText[i].equals("paste")) {
+                    button.setOnAction(event -> {
+                        pasteFromClipboard();
+                    });
+                }
+
+                //history
+                if(buttonsText[i].equals("History")){
+                    button.setOnAction(event -> {
+                        showHistory();
+                    });
+                }
+
+                //del button
+                if (buttonsText[i].equals("del")) {
+                    button.setOnAction(event -> {
+                        if (lExcpression.getText().contains("Error")) {
+                            expression = "";
+                            updateLabel();
+                        } else {
+
+                            char[] arr = lExcpression.getText().toCharArray();
+                            expression = "";
+                            for (int j = 0; j < arr.length - 1; j++) {
+                                expression += arr[j];
+                            }
+                            updateLabel();
+                        }
+                    });
+                }
+
+                //() button
+                if (buttonsText[i].equals("()")) {
+                    button.setOnAction(event -> {
+                        long openCount = expression.chars().filter(c -> c == '(').count();
+                        long closeCount = expression.chars().filter(c -> c == ')').count();
+
+                        if (openCount > closeCount) {
+                            appendToExpression(")");
+                        } else {
+                            appendToExpression("(");
+                        }
+                    });
+                }
+
+                //AC Button
+                if (buttonsText[i].equals("AC")) {
+                    button.setOnAction(event -> {
+                        expression = "";
+                        updateLabel();
+                    });
+                }
+
+                if (buttonsText[i].equals("top")) {
+                    button.getStyleClass().addAll("button-operation", "button-form", "font-white", "background-red");
+                    button.setOnAction(event -> {
+                        if (stage.isAlwaysOnTop()) {
+                            stage.setAlwaysOnTop(false);
+                            button.getStyleClass().remove("background-green");
+                            button.getStyleClass().add("background-red");
+                        } else {
+                            stage.setAlwaysOnTop(true);
+                            button.getStyleClass().remove("background-red");
+                            button.getStyleClass().add("background-green");
+                        }
+                    });
+                }
+            } else {
+                if (buttonsText[i].equals("=")) {
+                    button.getStyleClass().addAll("font-white", "button-calc", "button-form");
+                    button.setOnAction(event -> {
+                        RechnerControler rc = new RechnerControler();
+
+                        String tmpExpr = expression;
+                        expression = rc.getCalculation(tmpExpr);
+                        addToHistrory(tmpExpr + " = " + expression);
+                        updateLabel();
+                        Clipboard clipboard = Clipboard.getSystemClipboard();
+                        ClipboardContent content = new ClipboardContent();
+                        content.putString(lExcpression.getText());
+                        clipboard.setContent(content);
+                    });
+                } else {
+                    if (buttonsText[i].matches("[×÷+\\-,.]")) {
+                        button.getStyleClass().addAll("font-white", "button-operation", "button-form");
+                    } else {
+                        button.getStyleClass().addAll("font-white", "button-normal", "button-form");
+                    }
+                    button.setOnAction(event -> {
+                        appendToExpression(button.getText());
+                    });
+                }
+            }
+
+            gp.add(button, col, row);
+            row++;
+            if (row >= maxRows) {
+                col++;
+                row = 0;
+            }
+
+        }
+        gp.getStyleClass().add("background-black");
+        return gp;
+    }
+
+    private void addKeyboardShortCuts() {
+        scene.setOnKeyPressed(event -> {
+            String key = event.getText();
+            switch (key) {
+                case "*" -> appendToExpression("×");
+                case "/" -> appendToExpression("÷");
+                case "(" -> appenBrackets();
+                case ")" -> appenBrackets();
+                case "." -> appendToExpression(".");
+                case "," -> appendToExpression(".");
+
+            }
+
+            if(!event.isShiftDown() && (key.equals("7") || key.equals("8") || key.equals("9") || key.equals("+") )) {
+                appendToExpression(key);
+            }
+
+            if (event.isShiftDown() && event.isAltDown() && event.getCode() == KeyCode.UP) {
+
+                for (Node node : gp.getChildren()) {
+                    if (node instanceof Button button && "top".equals(button.getText())) {
+                        if (stage.isAlwaysOnTop()) {
+                            stage.setAlwaysOnTop(false);
+                            button.getStyleClass().remove("background-green");
+                            button.getStyleClass().add("background-red");
+                        } else {
+                            stage.setAlwaysOnTop(true);
+                            button.getStyleClass().remove("background-red");
+                            button.getStyleClass().add("background-green");
+                        }
+                    }
+                }
+                return; // verhindert dass unten der switch greift
+            }
+            if (event.isShiftDown() && event.getCode() == KeyCode.DIGIT7) {
+                appendToExpression("÷");
+                return;
+            }
+            switch (event.getCode()) {
+                case DIGIT0, NUMPAD0 -> appendToExpression("0");
+                case DIGIT1, NUMPAD1 -> appendToExpression("1");
+                case DIGIT2, NUMPAD2 -> appendToExpression("2");
+                case DIGIT3, NUMPAD3 -> appendToExpression("3");
+                case DIGIT4, NUMPAD4 -> appendToExpression("4");
+                case DIGIT5, NUMPAD5 -> appendToExpression("5");
+                case DIGIT6, NUMPAD6 -> appendToExpression("6");
+                case NUMPAD7 -> appendToExpression("7");
+                case  NUMPAD8 -> appendToExpression("8");
+                case  NUMPAD9 -> appendToExpression("9");
+                case V -> pasteFromClipboard();
+                case PLUS -> appendToExpression("+");
+                case MINUS -> appendToExpression("-");
+                case MULTIPLY -> appendToExpression("*");
+                case DIVIDE -> appendToExpression("/");
+                case ENTER, EQUALS -> {
+                    RechnerControler rc = new RechnerControler();
+                    String tmpExpr = expression;
+                    expression = rc.getCalculation(tmpExpr);
+                    addToHistrory(tmpExpr + " = " + expression);
+                    updateLabel();
+                }
+                case BACK_SPACE -> {
+                    if (lExcpression.getText().contains("Error")) {
+                        expression = "";
+                        updateLabel();
+                    } else {
+
+                        char[] arr = lExcpression.getText().toCharArray();
+                        expression = "";
+                        for (int j = 0; j < arr.length - 1; j++) {
+                            expression += arr[j];
+                        }
+                        updateLabel();
+                    }
+                }
+                case T -> {
+                    if (darkmode) {
+                        // Remove dark classes
+                        lExcpression.getStyleClass().removeAll("background-black", "color-white");
+                        gp.getStyleClass().removeAll("background-black");
+                        //layout.getStyleClass().removeAll("background-black");
+                        scrolPane.getStyleClass().removeAll("background-black");
+
+                        // Add light classes
+                        lExcpression.getStyleClass().addAll("background-white", "color-black");
+                        gp.getStyleClass().add("background-white");
+                        //layout.getStyleClass().add("background-white");
+                        scrolPane.getStyleClass().add("background-white");
+
+                        darkmode = false;
+
+                    } else {
+                        // Remove light classes
+                        lExcpression.getStyleClass().removeAll("background-white", "color-black");
+                        gp.getStyleClass().removeAll("background-white");
+                        //layout.getStyleClass().removeAll("background-white");
+                        scrolPane.getStyleClass().removeAll("background-white");
+
+                        // Add dark classes
+                        lExcpression.getStyleClass().addAll("background-black", "color-white");
+                        gp.getStyleClass().add("background-black");
+                        //layout.getStyleClass().add("background-black");
+                        scrolPane.getStyleClass().add("background-black");
+
+                        darkmode = true;
+
+                    }
+                }
+                case DELETE -> {
+                    expression = "";
+                    updateLabel();
+                }
+            }
+        });
+
+    }
+
+    private void appenBrackets() {
+        long openCount = expression.chars().filter(c -> c == '(').count();
+        long closeCount = expression.chars().filter(c -> c == ')').count();
+
+        if (openCount > closeCount) {
+            appendToExpression(")");
+        } else {
+            appendToExpression("(");
+        }
+    }
+
+    private void pasteFromClipboard() {
+        try {
+            java.awt.datatransfer.Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            if (clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+                // Text auslesen
+                String text = (String) clipboard.getData(DataFlavor.stringFlavor);
+                if (!isStringValid(text)) {
+                    expression = "Error: can't paste text because it contains letters illegal characters";
+                    updateLabel();
+                    return;
+                } else {
+                    appendToExpression(text);
+                }
+
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private boolean isStringValid(String text) {
+        if (text.matches(".*[a-zA-Z].*")) {
+            return false;
+        }
+        if (text.contains("[×÷+\\-,.]")) {
+            if (expression.isBlank()) {
+                return false;
+            }
+            String lastChar = String.valueOf(expression.charAt(expression.length() - 1));
+            if (lastChar.matches("[×÷+\\-,.]")) {
+                return false; // does not add a rechenoperator if the last character is a rechenoperator
+            }
+        }
+        return true;
+    }
+
+    private void showHistory(){
+        historyStage = new Stage();
+        historyStage.setTitle("History");
+        VBox container = new  VBox();
+        for (String tmp : history){
+            Label tmpExpr = new Label(tmp);
+            Button tmpBtn = new Button("Copy");
+            Button copyResult = new  Button("Copy Result");
+            tmpBtn.setOnAction(e -> {
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                ClipboardContent content = new ClipboardContent();
+                content.putString(tmp);
+                clipboard.setContent(content);
+            });
+            copyResult.setOnAction(e ->{
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                ClipboardContent content = new ClipboardContent();
+                String[] put = tmp.split("=");
+                content.putString(put[1].trim());
+                clipboard.setContent(content);
+            });
+            HBox hBox = new HBox(20, tmpExpr, tmpBtn, copyResult);
+            container.getChildren().add(hBox);
+        }
+        Button close = new  Button("Close");
+        close.setOnAction(e -> {
+            historyStage.close();
+        });
+        container.getChildren().add(close);
+        historyScene = new Scene(container);
+        historyStage.setScene(historyScene);
+        //historyStage.setResizable(false);
+        historyStage.setMinHeight(301);
+        historyStage.setMinWidth(215);
+        historyStage.show();
+    }
 }

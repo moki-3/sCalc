@@ -44,3 +44,36 @@ int row = 0; //zeile
  (character.equals("+") || character.equals("-") || character.equals("×") || character.equals("÷"))
 
 ------------------------------------------------------------------------------------------------------------------------
+
+ALTE appendToExpresion METHODE
+
+
+if (lExcpression.getText().contains("Error") || lExcpression.getText().contains("Infinity")) {
+            expression = value;
+            updateLabel();
+            return;
+        }
+        if (value.contains("[×÷+\\-,.]")) {
+            if (expression.isBlank()) {
+                return;
+            }
+            String lastChar = String.valueOf(expression.charAt(expression.length() - 1));
+            if (lastChar.matches("[×÷+\\-,.]")) {
+                return; // does not add a rechenoperator if the last character is a rechenoperator
+            }
+        }
+
+        if (value.matches("[.,]]")) {
+            char[] arr = expression.toCharArray();
+            for (int i = arr.length - 1; i > -1; i--) {
+                if (String.valueOf(arr[i]).matches("[×÷+\\-,.]")) {
+                    break;
+                }
+                if (arr[i] == ',' || arr[i] == '.') {
+                    return;
+                }
+
+            }
+        }
+
+------------------------------------------------------------------------------------------------------------------------

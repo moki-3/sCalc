@@ -9,7 +9,12 @@ public class RechnerControler {
         if (result.isError()) {
             return "Error";
         } else {
-            return result.getResult();
+            //if results ends with .0 remove the .0
+            if(result.getResult().endsWith(".0")){
+                result.setResult(result.getResult().substring(0, result.getResult().length()-2));
+            }
+                return result.getResult();
+
         }
 
     }

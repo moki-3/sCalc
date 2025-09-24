@@ -12,6 +12,7 @@ public class RechnerModel {
 
     public resultType calculate(String expr) {
 
+        String expressionForHistory = expr;
 
         expr = expr.replace(",", ".");
         expr = expr.replace("×", "*");
@@ -24,6 +25,8 @@ public class RechnerModel {
         } catch (Exception e) {
             return new resultType(-1, true);
         }
+
+
 
         return new resultType(result, false);
 

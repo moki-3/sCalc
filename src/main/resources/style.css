@@ -37,6 +37,7 @@
 
 .background-black {
     -fx-background-color: #000000;
+    -fx-min-width: 270;
 }
 
 .button-quit {
@@ -46,6 +47,7 @@
 
 .background-white {
     -fx-background-color: #FFFFFF;
+    -fx-min-width: 270;
 }
 
 .color-black {
