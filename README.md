@@ -17,9 +17,12 @@ Linux/ alternative to the .dmg and .exe: there is also a .jar file. <br>
 shift + option/alt + arrow-up - applications stays on top <br>
 t -> changes theme <br>
 v -> pastes your most recent copied item <br>
+? -> opens this page <br>
 
 ### Buttons
 sun/moon -> changes theme <br>
 Clock/X -> opens or closes history window <br>
 paste -> pastes your most recent copied item <br>
+help -> opens this page <br>
+
 
