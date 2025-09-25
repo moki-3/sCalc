@@ -21,3 +21,5 @@ v -> pastes your most recent copied item
 ### Buttons
 sun/moon -> changes theme
 Clock/X -> opens or closes history window
+paste -> pastes your most recent copied item
+
